@@ -1,0 +1,276 @@
+AWS Security And Encryption:
+
+	1. Why Need Encryption in Flight(SSL) ?
+
+	When we send sensitive information  e.g. my credit card information to the server to make a payment online then I want to make sure, no one , on the way where network package is traversed can see my credit card information. Make sure sites is HTTPS , means that site guarantees me  SSL enabled and I get the encryption in flight.
+	
+	
+	
+	
+	2. Server Side Encryption :
+	Why Need Encryption at REST ?
+
+	
+ 
+	For example: We are sending the object/data to 'EBS' through HTTP/S, then 'EBS' will use the Data key and encrypt the object
+	And when we need the object back, 'EBS' will again use same Data key to decrypt the object.
+
+
+	3. Client Side Encryption :
+	Why Need Encryption at Client Side?
+		• Data is encrypted by the client and never decrypted by the server 
+		• Data will be decrypted by a receiving client 
+		• The server should not be able to decrypt the data 
+		• Could leverage Envelope Encryption
+	
+	
+
+	For example: We are sending encrypted object/data to 'FTP/S3/DynamoDB'  with client side data key 
+	and when we need the object back from 'FTP/S3/DynamoDB' , Client will have to use same Data key to decrypt the object/data.
+	
+	4. AWS - KMS (Key Management Service) :
+	
+		a. AWS KMS (Key Management Service):
+			 • Anytime you hear “encryption” for an AWS service, it’s most likely KMS • Easy way to control access to your data, AWS manages keys for us 
+			 • Fully integrated with IAM for authorization
+			 • Seamlessly integrated into:
+				 • Amazon EBS: encrypt volumes
+				 • Amazon S3: Server side encryption of objects 
+				• Amazon Redshift: encryption of data 
+				• Amazon RDS: encryption of data
+				 • Amazon SSM: Parameter store
+				 • Etc…
+			 • But you can also use the CLI / SDK
+		
+		b. AWS KMS 101:
+			•Anytime you need to share sensitive information… use KMS 
+				• Database passwords 
+				• Credentials to external service
+				 • Private Key of SSL certificates
+			 • The value in KMS is that the CMK used to encrypt data can never be retrieved by the user, and the CMK can be rotated for extra security 
+			• Never ever store your secrets in plaintext, especially in your code!
+			 • Encrypted secrets can be stored in the code / environment variables
+			 • KMS can only help in encrypting up to 4KB of data per call
+			 • If data > 4 KB, use envelope encryption 
+			• To give access to KMS to someone: 
+				• Make sure the Key Policy allows the user
+				 • Make sure the IAM Policy allows the API calls
+				
+		c. AWS KMS (Key Management Service):
+			 • Able to fully manage the keys & policies: 
+				• Create
+				• Rotation policies 
+				• Disable • Enable 
+			• Able to audit key usage (using CloudTrail) 
+			• Three types of Customer Master Keys (CMK): 
+			          • AWS Managed Service Default CMK: free  : This is free KMS key which is managed by AWS itself.
+				• User Keys created in KMS: $1 / month  : When you want to create your own user key directly in KMS which cost $1 per month.
+				• User Keys imported (must be 256-bit symmetric key): $1 / month : When you want to create your own user key and don't trust on KMS but you want to put them into KMS for storage which cost $1 per month.
+			• + pay for API call to KMS ($0.03 / 10000 calls) : Any time we call KMS for encryption or decryption or any API call, you will have to pay  $0.03 / 10000 calls which does not seems like much but when we talk about millions of data then cost may increase.
+			
+	
+		D. How does KMS work?
+	
+		Here, client (CLI/SDK) has secret(password) which needs to encrypt or decrypt and which is less than 4KB, that means we can directly use KMS to encrypt and decrypt the secret(password).
+		
+		So client says , we want to use encrypt API and we send secret to 'KMS' and client says we want to use this 'CMK' (this CMK can be AWS or user created or user imported)
+		
+		KMS says ok but first I have to use IAM permission because KMS make sure that client has permission to encrypt the data using this CMK. If KMS finds IAM permission then KMS perform the encryption within the KMS service the data and send back to us encrypted data(secret). Now we have encrypted data(secret).
+		
+		Same flow goes for decrypt API.
+		
+		Note: All encryption and decryption happens at KMS side only.
+		
+		
+		
+		
+		
+		E. IAM for KMS
+		Go to IAM service -> Encryption Key (on left panel) -> Get Started Now -> We can select the region 
+		-> Click on create key -> Give Alias name
+		-> Click on Advanced option (One is 'KMS' : which is AWS managed key and free of cost and second one is  'external'
+		    which use when we want to import our key and not free at all)
+		
+		
+		
+		->Next Step-> Next Step -> Now chose who has administrator permission to use this key 
+		
+		
+		
+		
+		-> Next Step -> Now chose who can use this key
+		
+		
+		
+		-> Next Step -> preview key policy -> Finish
+		
+		
+		Open the key -> we can view our key and custom the key like we can add external accounts to use this key
+		and we can enable 'Key Rotation' which means this key changes every year if we have security concerns which is coming from security team.
+			
+		
+	5. Use KMS key With AWS Lambda Function:
+			1. Create one role which has permission to execute lambda functions says : 'aman_aws_lambda'
+	
+				
+			
+			
+			2. Create one lambda function in python language in this example using above role. Using this lambda we want to encrypt and decrypt the our DB password. 
+	
+		  Points:
+				1) To put the DB password direct in code is not good at all.
+				2) To put the  DB password direct in environment variable is not as well.
+				3) So to encrypt the DB password, go to Encryption configuration -> Enable helpers for encryption in transit (Now encrypt option will be enabled and we will be able to encrypt the our DB password) and 
+				Select 'Use a customer master key (to use own key)' as shown in below image:
+				
+				
+			
+			4.) Now click on 'Encrypt' button , noting will happen
+				
+				This happens because our current lambda function  does not have permission to use this customer master key.
+				
+				Let's go back to our IAM -> encryption key -> open created encryption key -> under 'Key Users' section -> add above created role 'aman_aws_lambda'
+				
+				Which means this role 'aman_aws_lambda' should be able to use my key.
+				
+					
+			
+			
+		
+			3. IAM Role To Access KMS : 
+				1) Open created Role or create new role 
+				2) Click on attach policies -> Create policy
+				3) Search 'KMS' in Service search box -> add all KMS service or add specific service based on your needs
+				4) Give KMS access to all resources or specific resource
+				5) Click on Review policy -> Give name -> Create policy.
+				6) Attached this newly created policy to the our role.
+			
+			
+			
+		
+		
+		
+			4. Go back to created lambda:
+				1) Add your KMS key as shown in below image:
+		
+			
+		
+			5. Now click on Encrypt button : You will see that DB password is encrypted and we can't see that.
+		
+		
+			
+				
+			6. Click on Code button and take the code and paste into your lambda code : This code helps us to decrypt our DB password through code. 
+		
+		
+			import json
+			import boto3
+			import os
+			
+			from base64 import b64decode
+			
+			ENCRYPTED = os.environ['DB_PASSWORD']
+			# Decrypt code should run once and variables stored outside of the function
+			# handler so that these are decrypted once per container
+			DECRYPTED = boto3.client('kms').decrypt(CiphertextBlob=b64decode(ENCRYPTED))['Plaintext']
+			
+			
+			def lambda_handler(event, context):
+			    print(DECRYPTED)
+			    return "hello world"
+			
+			
+			7. Test the lambda : We should get back our DB password back.
+		
+			
+			
+			
+			
+	6. AWS - Encryption SDK :
+
+		Q. We know that KMS allows only 4KB of data. What if you want to encrypt over 4 KB using KMS? 
+	  Ans. For this, we need to use Envelope Encryption. Envelope Encryption is a bit cumbersome to implement because it 
+	           has lot of steps to do.
+		The AWS Encryption SDK helps us use Envelope Encryption .
+		Note: It is different from the S3 Encryption SDK. 
+		
+		• The envelope Encryption SDK also exists as a CLI tool we can install .
+		
+		Q. For the exam: anything over 4 KB of data , how to encrypt that data?
+	  Ans. That data needs to be encrypted and must use the Encryption SDK, that’s means use Envelope Encryption,
+	          also that’s means use GenerateDataKey API.
+	
+		Encryption SDK == Envelope Encryption == GenerateDataKey API
+		
+	
+	 Envelope Encryption Flow: 
+		Here, client (CLI/SDK) has big file of 10 MB which needs to encrypt or decrypt, that means we can not directly use KMS to encrypt and decrypt the big file..
+		
+		So first thing call KMS using 'GeneratedDataKey' API and GeneratedDataKey' is an API to call where we have to specify CMK in KMS and we like KMS to generate a Data key for usinh the CMK.
+		
+		KMS says ok but first I have to use IAM permission because KMS make sure that client has permission to generate the data key and encrypt the data using this CMK. If KMS finds IAM permission then KMS generate the data key and also encrypt the data key with CMK, means KMS did the two thing here. 
+		
+		Send back to us generated data key(which is plain text) and also sends back encrypted data key(DEK). 
+		
+		Now using the Plain DEK(data key), client is able to do client side encryption. This is great because all the encryption happens at client side and we have the 'Encrypted file' using data key. 
+		
+		
+		
+		
+		
+	
+	
+		Now we remove the plain text data key and we have Final file which is combination of "Encrypted DEK + Encrypted file''.
+		So this is two level of encryption that’s why it is called 'Envelope Encryption'
+		
+	
+	
+		
+	
+	
+	
+	 Envelope Decryption Flow: 
+		We ask to KMS via Decrypt API and say hey here is the 'Encrypted DEK' , please decrypt for me . So KMS will look into CMK and check the IAM permission and decrypt the data key using CMK and send 'Plaintext data key' back to client .
+		
+		Now we have again 'Plaintext data key' that means we will be able to perform client side decryption . So with 'Plaintext data key' on 'Encrypted file' , we will get back the our original Big file back.
+	
+		
+	
+	
+	Note : To use Envelope Encryption Concept : we have to use ARN of KMS as key like shown in below picture.
+	
+	ARN : arn:aws:kms:us-east-1:658803210908:key/b22e78fc-a039-4a34-bb67-05597265f2c9
+
+		
+		
+	AWS Client side encryption link : https://docs.aws.amazon.com/dynamodb-encryption-client/latest/devguide/java-examples.html
+	
+	
+
+	7. AWS -Parameter Store :
+
+	
+	
+	
+	In above pic, we have application and application could be EC2, lambda etc. and you wants to interact with 'parameter store' to retrieve the parameter. So we can use the SDK and say hey 'parameter store' like to get 'Plaintext configuration' and then 
+	Parameter store checks the IAM permission and gives the 'Plaintext configuration'.
+	
+	Similarly when we ask to parameter store  to get 'Encrypted configuration' and then Parameter store checks the IAM permission and also calls the 'Decryption Service' on KMS side, so KMS will be used to decrypt it.
+	So if Parameter store stores finds everything fine, Parameter store will send us 'Encrypted configuration'.
+	
+	Note: This is cool, we don't need to directly interact with KMS to get the Encrypted data, here we just interact with 'SSM parameter store' and decryption happens seamlessly for us. So it simplifies a little bit the work flow versus KMS.
+	
+	
+	AWS Parameter Store Hierarchy:
+		If there is hierarchy, like shown as below and you are free to use any name. 
+		For example, you have /my-department then you have my-app/ then you have dev environment and so on…
+		So think like a giant tree and you can organize that tree however you want. Some people have the department centric, some people have the app centric etc. All that matters is that you define some kind of hierarchy and convention by how you define your parameters 
+		
+			Q. So why do we do this ?
+		 Ans. Well say we have a Dev Lambda function and we want to get Dev parameter then we would just use the 'GetParameters' or   'GetParametersByPath' API. So just remember these two APIs and we would ask directly for the Dev parameters.
+		But if we had a Prod Lambda Function, it would automatically ask for Prod parameters and so here we can see, we can differentiate different parameters for different environments which is good because we have clear separation.
+		
+		So this is how easy that is, you just need to remember that the stores are a hierarchy that you get encrypted and plain text parameters and you have 'GetParameters' or   'GetParametersByPath' API
+		
+	
+	
