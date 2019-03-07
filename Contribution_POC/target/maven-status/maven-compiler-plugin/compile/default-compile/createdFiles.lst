@@ -1,0 +1,14 @@
+com/aman/lambda/db/HelperCSV.class
+com/aws/contribution/SaveItemsIntoDynamoDB2.class
+com/aws/contribution/SaveItemsIntoDynamoDB1.class
+com/aws/contribution/ReadFromDynamoDB_Pagination_Validation3.class
+com/aws/contribution/Test.class
+com/aws/contribution/SaveItemsIntoDynamoDB.class
+com/aws/contribution/ReadFileFromS3Bucket.class
+com/aman/lambda/pojo/parameter/Parameters.class
+com/aws/contribution/ReadFromDynamoDB_Pagination_Validation1.class
+com/aman/lambda/pojo/parameter/Report.class
+com/aws/contribution/ReadFromDynamoDB_Pagination_Validation2.class
+com/aws/contribution/ProcessFileFromS3Bucket.class
+com/aws/contribution/UpdateDynamoDbTable.class
+com/aws/contribution/ReadFileFromS3Bucket2.class

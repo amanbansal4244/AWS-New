@@ -1,0 +1,4 @@
+Id,specification_category,specification_name,specification_value,IS_ANCILLARY,RECORD_STATUS_ID
+111,car,abc,111,yes,5
+110,bike,xyz,222,no,5
+112,train,xyz,222,no,5
