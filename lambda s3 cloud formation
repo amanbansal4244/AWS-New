@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name of S3 bucket
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  ThumbnailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri:
+        Bucket: <%REPO_BUCKET%>
+        Key: dc7d5de9-419e-4bf5-90cf-43b163d7be25
+      Runtime: go1.x
+      Handler: main
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: ImageBucket
+            Events: s3:ObjectCreated:*
+      Timeout: 300
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      NotificationConfiguration:
+        LambdaConfigurations:
+        - Function:
+            Fn::GetAtt:
+            - ThumbnailFunction
+            - Arn
+          Event: s3:ObjectCreated:*
+      BucketName:
+        Ref: BucketName
+    DependsOn:
+    - ThumbnailFunctionS3EventPermission
+Description: Generate thumbnails from images in S3
