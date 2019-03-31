@@ -1,0 +1,367 @@
+DynamoDB : AWS SAM CLI:
+
+Follow below link to know what attributes are required to create CLI command:
+
+	Link : https://docs.aws.amazon.com/cli/latest/reference/dynamodb/index.html
+	
+
+Note : Open terminal where AWS CLI is installed
+
+
+	1. To know list of tables using SAM CLI  : 
+		
+		Command:	aws dynamodb list-tables
+		
+
+	2. To describe a table
+	This example describes the aman table.
+	
+	aws dynamodb describe-table help
+	
+	Command:	aws dynamodb scan --table-name <TABLE_NAME> --select "COUNT"
+	Ex.	aws dynamodb describe-table --table-name aman
+			  
+	
+	Output: We will see all the Meta Data of our tables in JSON format.
+	
+		{
+		    "Table": {
+		        "TableArn": "arn:aws:dynamodb:us-east-1:658803210908:table/aman", 
+		        "AttributeDefinitions": [
+		            {
+		                "AttributeName": "Id", 
+		                "AttributeType": "S"
+		            }, 
+		            {
+		                "AttributeName": "RECORD_STATUS_ID", 
+		                "AttributeType": "S"
+		            }
+		        ], 
+		        "GlobalSecondaryIndexes": [
+		            {
+		                "IndexSizeBytes": 318, 
+		                "IndexName": "RECORD_STATUS_ID-index", 
+		                "Projection": {
+		                    "ProjectionType": "ALL"
+		                }, 
+		                "ProvisionedThroughput": {
+		                    "NumberOfDecreasesToday": 0, 
+		                    "WriteCapacityUnits": 0, 
+		                    "ReadCapacityUnits": 0
+		                }, 
+		                "IndexStatus": "ACTIVE", 
+		                "KeySchema": [
+		                    {
+		                        "KeyType": "HASH", 
+		                        "AttributeName": "RECORD_STATUS_ID"
+		                    }
+		                ], 
+		                "IndexArn": "arn:aws:dynamodb:us-east-1:658803210908:table/aman/index/RECORD_STATUS_ID-index", 
+		                "ItemCount": 3
+		            }
+		        ], 
+		        "ProvisionedThroughput": {
+		            "NumberOfDecreasesToday": 0, 
+		            "WriteCapacityUnits": 0, 
+		            "ReadCapacityUnits": 0
+		        }, 
+		        "TableSizeBytes": 318, 
+		        "TableName": "aman", 
+		        "BillingModeSummary": {
+		            "LastUpdateToPayPerRequestDateTime": 1551540140.332, 
+		            "BillingMode": "PAY_PER_REQUEST"
+		        }, 
+		        "TableStatus": "ACTIVE", 
+		        "TableId": "9551f635-cfb2-4535-813a-3c138e892592", 
+		        "KeySchema": [
+		            {
+		                "KeyType": "HASH", 
+		                "AttributeName": "Id"
+		            }
+		        ], 
+		        "ItemCount": 3, 
+		        "CreationDateTime": 1551540140.332
+		    }
+		}
+		
+		
+	3. To delete the table using SAM CLI  :
+			
+			Command:	aws dynamodb delete-table --table-name <TABLE_NAME>
+			Ex.	aws dynamodb delete-table --table-name Test
+			
+			The response will look similar to this:
+				{
+				    "TableDescription": {
+				        "TableArn": "arn:aws:dynamodb:us-east-1:658803210908:table/Test", 
+				        "ProvisionedThroughput": {
+				            "NumberOfDecreasesToday": 0, 
+				            "WriteCapacityUnits": 5, 
+				            "ReadCapacityUnits": 5
+				        }, 
+				        "TableSizeBytes": 0, 
+				        "TableName": "Test", 
+				        "TableStatus": "DELETING", 
+				        "TableId": "a7fce92c-1d09-45e3-8b62-04ab90516970", 
+				        "ItemCount": 0
+				    }
+				}
+				
+	
+	4. To write item into table using SAM CLI  :
+		
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	Item to be inserted in item.json:
+		{
+		    "user_id":{"S":"1234abcd"},
+		    "timestamp":{"N":"1525013000"},
+		    "content":{"S":"Hello world"},
+		    "title": {"S": "Title 1111"}
+		}
+	
+	Note : Go to folder where above item.json is kept then run below command:
+	
+			Command:	aws dynamodb put-item --table-name <TABLE_NAME> --item file://item.json
+			Ex.	aws dynamodb put-item --table-name td_notes_test --item file://item.json
+			
+	Now go to console or via command to check whether item is created or not.
+	
+	5. To update item into table using SAM CLI  :
+		
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	key.json: PK which is going to be update
+		{
+		    "user_id":{"S":"1234abcd"}
+		}	
+	
+	attributes-names.json: Field name which is going to be update and taking field name 'title' referenced in varibale '#t'
+		{
+		    "#t":"title"
+		}
+	
+	attributes-values.json: updated value for title.
+	
+		{
+		    ":t":{"S":"My updated title"}
+		}
+	
+	Note : Go to folder where above files is kept then run below command:
+	
+			Command:	aws dynamodb update-item --table-name <TABLE_NAME> --key file://key.json --update-expression "SET #t = :t" --expression-attribute-names file://attribute-names.json --expression-attribute-values file://attribute-values.json
+			Ex.	aws dynamodb update-item --table-name td_notes_test --key file://key.json --update-expression "SET #t = :t" --expression-attribute-names file://attribute-names.json --expression-attribute-values file://attribute-values.json
+			
+	Now go to console or via command to check whether item is updated or not.
+	
+	6. To delete the specific table item using SAM CLI  :
+
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	key.json: PK which is going to be update
+		{
+		    "user_id":{"S":"1234abcd"}
+		}
+	
+			
+			Command:	aws dynamodb delete-item --table-name <TABLE_NAME> --key file://key.json
+			Ex.	aws dynamodb delete-item --table-name td_notes_test --key file://key.json
+	
+	
+	7. To delete the specific table item using SAM CLI  :
+
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	items.json: we are going to update and delete in one go
+	{
+	    "td_notes_test": [
+	        {
+	            "PutRequest": {
+	                "Item": {
+	                    "user_id": {"S": "1111"},
+	                    "timestamp": {"N": "1525013088"},
+	                    "content": {"S": "Content 1111"},
+	                    "title": {"S": "Title 1111"}
+	                }
+	            }
+	        },
+	        {
+	            "PutRequest": {
+	                "Item": {
+	                    "user_id": {"S": "2222"},
+	                    "timestamp": {"N": "1525013088"},
+	                    "content": {"S": "Content 2222"},
+	                    "title": {"S": "Title 2222"}
+	                }
+	            }
+	        },
+	        {
+	            "DeleteRequest": {
+	                "Key": {
+	                    "user_id": {"S": "1234abcd"}
+	                }
+	            }
+	        }
+	    ]
+	}
+	
+			
+			Command:	aws dynamodb batch-write-item --request-items file://items.json
+			Ex.	aws dynamodb batch-write-item --request-items file://items.json
+			
+			
+	It will delete existing record with user_id : 1234abcd and creates two more new items.
+	
+	7. To get the specific table item using SAM CLI  :
+
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	read-key.json: PK which is going to get from table
+		{
+		    "user_id":{"S":"1111"}
+		}
+	
+			
+			Command:	aws dynamodb get-item --table-name <TABLE_NAME> --key file://read-key.json
+			Ex.	aws dynamodb get-item --table-name td_notes_test --key file://read-key.json
+	
+	Response :
+		{
+		    "Item": {
+		        "content": {
+		            "S": "Content 1111"
+		        }, 
+		        "timestamp": {
+		            "N": "1525013088"
+		        }, 
+		        "user_id": {
+		            "S": "1111"
+		        }, 
+		        "title": {
+		            "S": "Title 1111"
+		        }
+		    }
+		}
+		
+		
+	8. To get using 'query' based on one condition(user_id column) the specific table item using SAM CLI  :
+
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	read-key.json: PK which is going to get from table
+		{
+		    "user_id":{"S":"1111"}
+		}
+	
+	expression-attribute-values.json
+		{
+		    ":uid":{"S":"1111"}
+		}
+	
+			
+			Command:	aws dynamodb query --table-name td_notes_test --key-condition-expression "user_id = :uid" --expression-attribute-value  file://expression-attribute-values.json
+			Ex.	aws dynamodb query --table-name td_notes_test --key-condition-expression "user_id = :uid" --expression-attribute-value  file://expression-attribute-values.json
+	
+	Response :
+	{
+	    "Count": 1, 
+	    "Items": [
+	        {
+	            "content": {
+	                "S": "Content 1111"
+	            }, 
+	            "timestamp": {
+	                "N": "1525013088"
+	            }, 
+	            "user_id": {
+	                "S": "1111"
+	            }, 
+	            "title": {
+	                "S": "Title 1111"
+	            }
+	        }
+	    ], 
+	    "ScannedCount": 1, 
+	    "ConsumedCapacity": null
+	}
+	
+	
+	9. To get using 'query'  based on two conditions (user_id and timestamp columns) the specific table item using SAM CLI  :
+
+	Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+	
+	
+	read-key.json: PK which is going to get from table
+		{
+		    "user_id":{"S":"1111"}
+		}
+	
+	expression-attribute-values.json
+		{
+		    ":uid":{"S":"1111"},
+		    ":t":{"N":"5"}
+		}
+	
+			
+			Command:	aws dynamodb query --table-name td_notes_test --key-condition-expression "user_id = :uid AND timestamp > :t" --expression-attribute-value  file://expression-attribute-values.json
+	
+	
+	We get the below error :
+		An error occurred (ValidationException) when calling the Query operation: Invalid KeyConditionExpression: Attribute name is a reserved keyword; reserved keyword: timestamp
+		
+	
+	To solve above error , we need to have one more file :
+	
+	expression-attribute-names.json
+		{
+		    "#t":"timestamp"
+		}
+		
+		
+		Command:	aws dynamodb query --table-name td_notes_test --key-condition-expression "user_id = :uid AND #t > :t" --expression-attribute-value  file://expression-attribute-values.json --expression-attribute-names file://expression-attribute-names.json
+		
+		
+		
+	10. To get using 'query'  based on two conditions (user_id and timestamp columns) and more filter conditions the specific table item using SAM CLI  :
+	
+		Suppose we have one table named 'td_notes_test' with primary key 'user_id'
+		
+		
+		read-key.json: PK which is going to get from table
+			{
+			    "user_id":{"S":"1111"}
+			}
+		
+		expression-attribute-values.json
+	
+			{
+			    ":uid":{"S":"1111"},
+			    ":t":{"N":"5"},
+			    ":cat":{"S":"todo"}
+			}
+		
+				
+				Command:	aws dynamodb query --table-name td_notes_test --key-condition-expression "user_id = :uid AND #t > :t" --expression-attribute-value  file://expression-attribute-values.json --expression-attribute-names file://expression-attribute-names.json --filter-expression "cat = :cat"
+		
+		
+			
+		
+	
+	10. To know no of items using SAM CLI  :
+		
+		Command:	aws dynamodb scan --table-name <TABLE_NAME> --select "COUNT"
+		Ex.	aws dynamodb scan --table-name aws dynamodb describe-table --table-name aman--select "COUNT"
+		
+		The response will look similar to this:
+			{
+    "Count": 123,
+    "ScannedCount": 123,
+    "ConsumedCapacity": null
+}
+		
+	
